@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zero Lich | Global Network</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg: #020202;
+            --sidebar: #060606;
+            --panel: #0a0a0a;
+            --border: #1f0a0a;
+            --primary: #e60000;
+            --primary-glow: #ff1a1a;
+            --secondary: #cc0000;
+            --text: #e8e8e8;
+            --muted: #7a7a7a;
+            --success: #00e676;
+            --terminal-bg: #000000;
+            --terminal-text: #00ff88;
+            --prompt: #ff4d4d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Global scanlines */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.08) 2px,
+                    rgba(0, 0, 0, 0.08) 4px);
+            opacity: 0.45;
+        }
+
+        /* CRT flicker */
+        .crt-flicker {
+            position: fixed;
+            inset: 0;
+            z-index: 99;
+            pointer-events: none;
+            background: rgba(255, 0, 0, 0.02);
+            animation: flicker 0.15s infinite alternate;
+            opacity: 0;
+        }
+        @keyframes flicker {
+            0% {
+                opacity: 0.02;
+            }
+            50% {
+                opacity: 0.05;
+            }
+            100% {
+                opacity: 0.01;
+            }
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: rgba(6, 6, 6, 0.97);
+            border-right: 1px solid var(--border);
+            padding: 28px 18px;
+            box-shadow: inset -12px 0 25px rgba(255, 0, 0, 0.03);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+        }
+        .logo {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: 5px;
+            margin-bottom: 45px;
+            text-shadow: 0 0 18px rgba(255, 0, 0, 0.55), 0 0 35px rgba(200, 0, 0, 0.3);
+            text-align: center;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+        .menu a {
+            display: block;
+            color: var(--muted);
+            text-decoration: none;
+            padding: 13px 16px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .menu a::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: var(--primary);
+            border-radius: 0 2px 2px 0;
+            transition: height 0.25s;
+        }
+        .menu a:hover,
+        .menu a.active {
+            background: rgba(255, 0, 0, 0.07);
+            border-color: rgba(255, 0, 0, 0.18);
+            color: #ff6b6b;
+        }
+        .menu a.active::before {
+            height: 60%;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            background:
+                radial-gradient(ellipse at center, rgba(120, 0, 0, 0.06), transparent 60%),
+                linear-gradient(180deg, #040404 0%, #000 100%);
+            overflow-y: auto;
+        }
+
+        /* Topbar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            background: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 15px var(--success);
+            animation: pulseDot 1.5s infinite;
+        }
+        @keyframes pulseDot {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.3);
+                opacity: 0.5;
+            }
+        }
+        .topbar span {
+            font-size: 13px;
+            color: var(--muted);
+            letter-spacing: 2px;
+            font-weight: 500;
+        }
+
+        /* Map container */
+        .visual {
+            flex: 1;
+            background: rgba(10, 10, 10, 0.88);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 0 35px rgba(200, 0, 0, 0.08),
+                inset 0 0 30px rgba(255, 0, 0, 0.02);
+            min-height: 300px;
+        }
+        .visual::before {
+            content: "";
+            position: absolute;
+            inset: -5%;
+            -webkit-mask: url("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg") center / contain no-repeat;
+            mask: url("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg") center / contain no-repeat;
+            background: radial-gradient(circle at center, rgba(255, 40, 40, 0.45), rgba(100, 0, 0, 0.2));
+            filter: blur(6px);
+            opacity: 0.75;
+            animation: mapPulse 8s ease-in-out infinite;
+        }
+        @keyframes mapPulse {
+            0%,
+            100% {
+                opacity: 0.75;
+            }
+            50% {
+                opacity: 0.95;
+            }
+        }
+        .visual::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.6)),
+                radial-gradient(ellipse at center, rgba(200, 0, 0, 0.05), transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Nodes */
+        .node {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--secondary);
+            border-radius: 50%;
+            cursor: pointer;
+            animation: nodePulse 2.5s infinite;
+            box-shadow: 0 0 12px rgba(255, 77, 77, 0.6);
+            z-index: 5;
+            transition: transform 0.2s;
+        }
+        .node:hover {
+            transform: scale(1.6);
+            z-index: 6;
+        }
+        .node::after {
+            content: "";
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 77, 77, 0.3);
+            animation: ringPulse 2.5s infinite;
+        }
+        @keyframes nodePulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.6);
+            }
+            70% {
+                box-shadow: 0 0 0 18px rgba(255, 77, 77, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 77, 77, 0);
+            }
+        }
+        @keyframes ringPulse {
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.5);
+                opacity: 0.3;
+            }
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: absolute;
+            background: rgba(10, 10, 10, 0.98);
+            border: 1px solid var(--border);
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 11px;
+            display: none;
+            pointer-events: none;
+            z-index: 20;
+            color: var(--text);
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.15);
+            backdrop-filter: blur(8px);
+            letter-spacing: 0.5px;
+        }
+        .tooltip strong {
+            color: var(--primary);
+            display: block;
+            margin-bottom: 6px;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+
+        /* Bottom control panel */
+        .control-panel {
+            margin-top: 16px;
+            background: rgba(10, 10, 10, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            backdrop-filter: blur(12px);
+            box-shadow: inset 0 0 25px rgba(255, 0, 0, 0.02);
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #050505;
+            border: 1px solid #2a0e0e;
+            border-radius: 12px;
+            padding: 10px 14px;
+        }
+        .toggle-label {
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1f1f1f;
+            border-radius: 24px;
+            transition: 0.3s;
+            border: 1px solid #3a1a1a;
+        }
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 2px;
+            background: #444;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        input:checked+.slider {
+            background: #4a0000;
+            border-color: #ff3333;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+        input:checked+.slider:before {
+            transform: translateX(18px);
+            background: #ff1a1a;
+            box-shadow: 0 0 12px #ff0000;
+        }
+
+        .cmd-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
+        }
+        .cmd-grid.visible {
+            display: grid;
+        }
+
+        .cmd-btn {
+            background: #080808;
+            border: 1px solid #2a0e0e;
+            border-radius: 8px;
+            padding: 10px 6px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: #bbbbbb;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .cmd-btn:hover {
+            background: #100505;
+            border-color: #ff3333;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(255, 0, 0, 0.25);
+            transform: translateY(-2px);
+        }
+        .cmd-btn:active {
+            transform: scale(0.96);
+            transition: 0.05s;
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #000000;
+            border: 1px solid #1f0f0f;
+            border-radius: 12px;
+            padding: 10px;
+            height: 120px;
+            overflow-y: auto;
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--terminal-text);
+            box-shadow: inset 0 0 25px rgba(255, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .terminal .line {
+            display: flex;
+            gap: 6px;
+            align-items: baseline;
+        }
+        .prompt {
+            color: var(--prompt);
+            font-weight: bold;
+        }
+        .cmd {
+            color: #cccccc;
+        }
+        .result {
+            color: #00ff88;
+            font-weight: 600;
+        }
+        .timestamp {
+            color: #555;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+
+        /* Scrollbar */
+        .terminal::-webkit-scrollbar {
+            width: 4px;
+        }
+        .terminal::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+        .terminal::-webkit-scrollbar-thumb {
+            background: #4a0000;
+            border-radius: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 80px;
+                padding: 20px 8px;
+            }
+            .menu a {
+                font-size: 10px;
+                padding: 8px 6px;
+                text-align: center;
+            }
+            .logo {
+                font-size: 14px;
+            }
+            .visual {
+                min-height: 220px;
+            }
+            .cmd-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="crt-flicker"></div>
+
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">ZERO LICH</div>
+            <nav class="menu">
+                <a href="index.html">Dashboard</a>
+                <a href="info.html" class="active">Initialization</a>
+                <a href="control.html">Devices Control</a>
+                <a href="devices.html">Devices</a>
+            </nav>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <div class="topbar">
+                <div class="dot"></div>
+                <span>GLOBAL NETWORK ACTIVE</span>
+            </div>
+
+            <!-- Map with nodes -->
+            <section class="visual" id="map">
+                <!-- North America -->
+                <div class="node" style="top:42%; left:22%;" data-name="US-East" data-region="USA" data-status="Online"></div>
+                <div class="node" style="top:45%; left:20%;" data-name="US-West" data-region="USA" data-status="Online"></div>
+                <div class="node" style="top:40%; left:24%;" data-name="CA-Node" data-region="Canada" data-status="Idle"></div>
+                <div class="node" style="top:47%; left:26%;" data-name="MX-GW" data-region="Mexico" data-status="Online"></div>
+
+                <!-- Europe -->
+                <div class="node" style="top:38%; left:48%;" data-name="UK-Core" data-region="UK" data-status="Online"></div>
+                <div class="node" style="top:40%; left:50%;" data-name="FR-Node" data-region="France" data-status="Online"></div>
+                <div class="node" style="top:42%; left:52%;" data-name="DE-Core" data-region="Germany" data-status="Online"></div>
+                <div class="node" style="top:41%; left:54%;" data-name="PL-Relay" data-region="Poland" data-status="Idle"></div>
+                <div class="node" style="top:44%; left:49%;" data-name="ES-Node" data-region="Spain" data-status="Online"></div>
+                <div class="node" style="top:39%; left:56%;" data-name="IT-GW" data-region="Italy" data-status="Online"></div>
+                <div class="node" style="top:37%; left:51%;" data-name="NL-Core" data-region="Netherlands" data-status="Online"></div>
+                <div class="node" style="top:36%; left:53%;" data-name="SE-Node" data-region="Sweden" data-status="Idle"></div>
+
+                <!-- Africa -->
+                <div class="node" style="top:55%; left:48%;" data-name="EG-Node" data-region="Egypt" data-status="Online"></div>
+                <div class="node" style="top:60%; left:50%;" data-name="NG-GW" data-region="Nigeria" data-status="Idle"></div>
+                <div class="node" style="top:63%; left:52%;" data-name="ZA-Core" data-region="South Africa" data-status="Online"></div>
+
+                <!-- Asia -->
+                <div class="node" style="top:45%; left:72%;" data-name="CN-Core" data-region="China" data-status="Online"></div>
+                <div class="node" style="top:43%; left:74%;" data-name="CN-East" data-region="China" data-status="Online"></div>
+                <div class="node" style="top:48%; left:76%;" data-name="JP-GW" data-region="Japan" data-status="Idle"></div>
+                <div class="node" style="top:50%; left:73%;" data-name="KR-Node" data-region="Korea" data-status="Online"></div>
+
+                <div class="tooltip" id="tooltip"></div>
+            </section>
+
+            <!-- Hidden Control & Terminal -->
+            <!-- <div class="control-panel">
+                <div class="toggle-container">
+                    <span class="toggle-label">🕶️ HIDDEN CONTROL</span>
+                    <label class="switch">
+                        <input type="checkbox" id="hiddenToggle" />
+                        <span class="slider"></span>
+                    </label>
+                </div> -->
+
+                <div class="cmd-grid" id="cmdGrid">
+                    <button class="cmd-btn" data-cmd="Trace Route">Trace Route</button>
+                    <button class="cmd-btn" data-cmd="Packet Sniff">Packet Sniff</button>
+                    <button class="cmd-btn" data-cmd="DDoS Sim">DDoS Sim</button>
+                    <button class="cmd-btn" data-cmd="Node Shutdown">Node Shutdown</button>
+                    <button class="cmd-btn" data-cmd="ARP Spoof">ARP Spoof</button>
+                    <button class="cmd-btn" data-cmd="DNS Poison">DNS Poison</button>
+                    <button class="cmd-btn" data-cmd="Port Scan">Port Scan</button>
+                    <button class="cmd-btn" data-cmd="Backdoor">Backdoor</button>
+                </div>
+
+                <div class="terminal" id="terminal">
+                    <div class="line">
+                        <span class="prompt">[ZL]#</span>
+                        <span class="cmd">Network layer active. Awaiting commands...</span>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // === Tooltip for nodes ===
+        const tooltip = document.getElementById("tooltip");
+        document.querySelectorAll(".node").forEach(node => {
+            node.addEventListener("mousemove", e => {
+                tooltip.style.display = "block";
+                tooltip.style.left = e.pageX + 15 + "px";
+                tooltip.style.top = e.pageY + 15 + "px";
+                tooltip.innerHTML = `
+                    <strong>${node.dataset.name}</strong>
+                    Region: ${node.dataset.region}<br>
+                    Status: ${node.dataset.status}
+                `;
+            });
+            node.addEventListener("mouseleave", () => {
+                tooltip.style.display = "none";
+            });
+        });
+
+        // === Hidden Control Toggle ===
+        const hiddenToggle = document.getElementById('hiddenToggle');
+        const cmdGrid = document.getElementById('cmdGrid');
+        const terminal = document.getElementById('terminal');
+
+        hiddenToggle.addEventListener('change', function() {
+            if (this.checked) {
+                cmdGrid.classList.add('visible');
+                addTerminalLine('Hidden Control', 'ACTIVATED. Advanced network commands unlocked.');
+            } else {
+                cmdGrid.classList.remove('visible');
+                addTerminalLine('Hidden Control', 'DEACTIVATED.');
+            }
+        });
+
+        // === Command Buttons ===
+        document.querySelectorAll('.cmd-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const command = this.dataset.cmd;
+                addTerminalLine(command, 'Done.');
+            });
+        });
+
+        // === Terminal Logger ===
+        function addTerminalLine(command, result = "") {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'line';
+            lineDiv.innerHTML = `
+                <span class="timestamp">[${timeStr}]</span>
+                <span class="prompt">[ZL]#</span>
+                <span class="cmd">${command}</span>
+                ${result ? `<span class="result">➜ ${result}</span>` : ''}
+            `;
+            terminal.appendChild(lineDiv);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // Initial scroll
+        terminal.scrollTop = terminal.scrollHeight;
+
+        console.log('%c⚠️ ZERO LICH %c| GLOBAL NETWORK %c| Unauthorized monitoring detected.',
+            'color:#ff1a1a; font-weight:bold; font-size:14px;',
+            'color:#aaa;',
+            'color:#666;');
+    </script>
+</body>
+</html>

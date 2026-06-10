@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zero Lich | Restricted Access Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #020202;
+            --panel: #060606;
+            --border: #1a0a0a;
+            --primary: #e60000;
+            --primary-bright: #ff1a1a;
+            --secondary: #cc0000;
+            --text: #e0e0e0;
+            --muted: #777777;
+            --ok: #00e676;
+            --err: #ff1744;
+            --glow-red: rgba(230, 0, 0, 0.5);
+            --glow-bright: rgba(255, 26, 26, 0.7);
+            --dark-red: #1a0000;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            min-height: 100vh;
+            background: var(--bg);
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            cursor: default;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ===== Scanlines Overlay ===== */
+        .scanlines {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.06) 2px,
+                    rgba(0, 0, 0, 0.06) 4px);
+            opacity: 0.7;
+        }
+
+        /* ===== CRT Flicker ===== */
+        .crt-flicker {
+            position: fixed;
+            inset: 0;
+            z-index: 11;
+            pointer-events: none;
+            background: rgba(255, 0, 0, 0.015);
+            animation: flicker 0.15s infinite alternate;
+            opacity: 0;
+        }
+
+        @keyframes flicker {
+            0% {
+                opacity: 0.02;
+            }
+            25% {
+                opacity: 0.05;
+            }
+            50% {
+                opacity: 0.01;
+            }
+            75% {
+                opacity: 0.06;
+            }
+            100% {
+                opacity: 0.03;
+            }
+        }
+
+        /* ===== Background Container ===== */
+        .visual {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at center, rgba(80, 0, 0, 0.2), transparent 60%),
+                radial-gradient(ellipse at 30% 20%, rgba(40, 0, 0, 0.3), transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(60, 0, 0, 0.25), transparent 50%),
+                linear-gradient(180deg, #030303 0%, #000000 100%);
+        }
+
+        /* ===== World Map with Red Glow ===== */
+        .visual::before {
+            content: "";
+            position: absolute;
+            inset: -5%;
+            -webkit-mask: url("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg") center / contain no-repeat;
+            mask: url("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg") center / contain no-repeat;
+            background:
+                radial-gradient(circle at 50% 50%, rgba(255, 40, 40, 0.5), rgba(100, 0, 0, 0.2));
+            filter: blur(6px);
+            opacity: 0.85;
+            z-index: 1;
+            animation: mapPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes mapPulse {
+            0%,
+            100% {
+                opacity: 0.75;
+            }
+            50% {
+                opacity: 0.95;
+            }
+        }
+
+        /* ===== Dark Overlay ===== */
+        .visual::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.75)),
+                radial-gradient(ellipse at center, rgba(200, 0, 0, 0.06), transparent 70%);
+            z-index: 2;
+        }
+
+        /* ===== Floating Particles ===== */
+        .particles {
+            position: fixed;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 1.5px;
+            height: 1.5px;
+            background: #ff2222;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #ff0000, 0 0 12px #ff0000;
+            animation: floatUp linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) translateX(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.9;
+            }
+            90% {
+                opacity: 0.2;
+            }
+            100% {
+                transform: translateY(-10vh) translateX(40px);
+                opacity: 0;
+            }
+        }
+
+        /* ===== Login Card ===== */
+        .card {
+            position: relative;
+            z-index: 5;
+            width: 440px;
+            background: rgba(8, 8, 8, 0.94);
+            border: 1px solid rgba(200, 0, 0, 0.25);
+            border-radius: 18px;
+            padding: 32px 30px 24px;
+            box-shadow:
+                0 0 40px rgba(200, 0, 0, 0.12),
+                0 0 80px rgba(0, 0, 0, 0.6),
+                0 20px 60px rgba(0, 0, 0, 0.7),
+                inset 0 1px 0 rgba(255, 255, 255, 0.02),
+                inset 0 0 40px rgba(180, 0, 0, 0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            transition: box-shadow 0.5s ease;
+        }
+
+        .card:hover {
+            box-shadow:
+                0 0 55px rgba(220, 0, 0, 0.18),
+                0 0 100px rgba(0, 0, 0, 0.7),
+                0 25px 70px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.03),
+                inset 0 0 50px rgba(200, 0, 0, 0.06);
+        }
+
+        /* ===== Top Accent Line ===== */
+        .card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 20px;
+            right: 20px;
+            height: 1px;
+            background: linear-gradient(90deg,
+                    transparent,
+                    rgba(255, 50, 50, 0.5),
+                    rgba(255, 0, 0, 0.8),
+                    rgba(255, 50, 50, 0.5),
+                    transparent);
+            border-radius: 1px;
+        }
+
+        /* ===== Corner Decorations ===== */
+        .card::after {
+            content: "";
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 12px;
+            height: 12px;
+            border-top: 2px solid rgba(255, 40, 40, 0.6);
+            border-right: 2px solid rgba(255, 40, 40, 0.6);
+            border-radius: 0 2px 0 0;
+            pointer-events: none;
+        }
+
+        .corner-bl {
+            position: absolute;
+            bottom: 8px;
+            left: 8px;
+            width: 12px;
+            height: 12px;
+            border-bottom: 2px solid rgba(255, 40, 40, 0.6);
+            border-left: 2px solid rgba(255, 40, 40, 0.6);
+            border-radius: 0 0 0 2px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* ===== Header ===== */
+        .brand {
+            text-align: center;
+            margin-bottom: 26px;
+            position: relative;
+        }
+
+        .logo-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+
+        .logo {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #1a0000, #330000, #0d0000);
+            display: grid;
+            place-items: center;
+            font-weight: 900;
+            font-size: 22px;
+            color: #fff;
+            letter-spacing: -1px;
+            box-shadow:
+                0 0 25px rgba(255, 0, 0, 0.45),
+                0 0 50px rgba(200, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            border: 1.5px solid rgba(200, 0, 0, 0.5);
+            position: relative;
+            animation: logoGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes logoGlow {
+            0%,
+            100% {
+                box-shadow: 0 0 25px rgba(255, 0, 0, 0.45), 0 0 50px rgba(200, 0, 0, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 35px rgba(255, 0, 0, 0.65), 0 0 70px rgba(220, 0, 0, 0.4);
+            }
+        }
+
+        .logo-ring {
+            position: absolute;
+            inset: -6px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            animation: ringRotate 6s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes ringRotate {
+            0% {
+                transform: rotate(0deg);
+                border-color: rgba(255, 50, 50, 0.3);
+            }
+            50% {
+                border-color: rgba(255, 100, 100, 0.5);
+            }
+            100% {
+                transform: rotate(360deg);
+                border-color: rgba(255, 50, 50, 0.3);
+            }
+        }
+
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: #ff2020;
+            text-shadow:
+                0 0 15px rgba(255, 0, 0, 0.5),
+                0 0 35px rgba(200, 0, 0, 0.3),
+                0 0 60px rgba(150, 0, 0, 0.25);
+            text-transform: uppercase;
+            position: relative;
+            display: inline-block;
+        }
+
+        /* Glitch effect on title */
+        .glitch-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .glitch-wrapper h1 {
+            animation: glitchSkew 4s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitchSkew {
+            0% {
+                transform: skew(0deg);
+            }
+            2% {
+                transform: skew(1deg, 0.5deg);
+            }
+            4% {
+                transform: skew(0deg);
+            }
+            96% {
+                transform: skew(0deg);
+            }
+            97% {
+                transform: skew(-0.8deg, -0.3deg);
+            }
+            99% {
+                transform: skew(0deg);
+            }
+            100% {
+                transform: skew(0deg);
+            }
+        }
+
+        .brand .subtitle {
+            font-size: 10px;
+            color: #999;
+            margin-top: 6px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            font-family: 'Share Tech Mono', monospace;
+            opacity: 0.8;
+        }
+
+        .brand .subtitle .dot {
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            background: #ff2222;
+            border-radius: 50%;
+            margin: 0 6px;
+            animation: dotBlink 1.5s ease-in-out infinite;
+            box-shadow: 0 0 8px #ff0000;
+        }
+
+        .brand .subtitle .dot:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+        .brand .subtitle .dot:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes dotBlink {
+            0%,
+            100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        /* ===== Fields ===== */
+        .field {
+            margin-top: 16px;
+            position: relative;
+        }
+
+        .label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: #aaa;
+            margin-bottom: 7px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            font-weight: 500;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .label::before {
+            content: "▸";
+            color: #ff3333;
+            font-size: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input {
+            width: 100%;
+            background: #030303;
+            border: 1px solid #1f1f1f;
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: #e8e8e8;
+            font-family: 'Share Tech Mono', 'Orbitron', monospace;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            caret-color: #ff3333;
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+        }
+
+        .input::placeholder {
+            color: #444;
+            letter-spacing: 0.5px;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: #cc0000;
+            box-shadow:
+                0 0 0 2px rgba(200, 0, 0, 0.2),
+                0 0 20px rgba(200, 0, 0, 0.15),
+                inset 0 2px 6px rgba(0, 0, 0, 0.5);
+            background: #050505;
+        }
+
+        .input:focus~.input-glow {
+            opacity: 1;
+        }
+
+        .input-glow {
+            position: absolute;
+            inset: -1px;
+            border-radius: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 0 18px rgba(200, 0, 0, 0.2);
+            z-index: -1;
+        }
+
+        /* ===== Button ===== */
+        .btn {
+            margin-top: 22px;
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 14px;
+            background: linear-gradient(160deg, #cc0000 0%, #660000 50%, #330000 100%);
+            color: #fff;
+            font-weight: 700;
+            font-size: 13px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            border: 1px solid rgba(255, 50, 50, 0.3);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(180, 0, 0, 0.35);
+        }
+
+        .btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            filter: brightness(1.15);
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 30px rgba(200, 0, 0, 0.5),
+                0 0 50px rgba(200, 0, 0, 0.2);
+            border-color: rgba(255, 80, 80, 0.6);
+            letter-spacing: 3px;
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            filter: brightness(0.9);
+            box-shadow: 0 2px 10px rgba(180, 0, 0, 0.3);
+            transition: all 0.05s ease;
+        }
+
+        .btn-icon {
+            display: inline-block;
+            margin-right: 6px;
+            font-size: 14px;
+        }
+
+        /* ===== Status ===== */
+        .status {
+            margin-top: 16px;
+            display: none;
+            background: #050505;
+            border: 1px dashed #2d1010;
+            border-radius: 12px;
+            padding: 13px 16px;
+            font-size: 11px;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .status.ok {
+            border-color: #1b5e20;
+            color: #00e676;
+            text-shadow: 0 0 10px rgba(0, 230, 118, 0.4);
+            background: #020805;
+            box-shadow: inset 0 0 20px rgba(0, 230, 118, 0.05);
+        }
+
+        .status.err {
+            border-color: #5c1a1a;
+            color: #ff4444;
+            text-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+            background: #080202;
+            box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.05);
+        }
+
+        /* ===== Warning Area ===== */
+        .warning-area {
+            margin-top: 22px;
+            text-align: center;
+            background: #0d0404;
+            border: 1px solid #3d1010;
+            border-radius: 12px;
+            padding: 16px 14px;
+            box-shadow: inset 0 0 20px rgba(255, 0, 0, 0.06);
+        }
+
+        .warning-text {
+            font-size: 10px;
+            color: #cc8888;
+            letter-spacing: 0.8px;
+            margin-bottom: 12px;
+            font-family: 'Share Tech Mono', monospace;
+            line-height: 1.6;
+        }
+
+        .warning-text .highlight {
+            color: #ff4444;
+            font-weight: 700;
+        }
+
+        .telegram-user {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #ff5555;
+            letter-spacing: 1.5px;
+            font-family: 'Orbitron', sans-serif;
+            background: rgba(255, 0, 0, 0.08);
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 0, 0, 0.25);
+            text-shadow: 0 0 8px rgba(255, 0, 0, 0.4);
+        }
+
+        /* ===== Footer Text ===== */
+        .footer-legal {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 9px;
+            color: #555;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+            opacity: 0.7;
+        }
+
+        .footer-legal strong {
+            color: #cc3333;
+            font-weight: 600;
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 480px) {
+            .card {
+                width: 92vw;
+                padding: 24px 18px 18px;
+                border-radius: 14px;
+            }
+            .brand h1 {
+                font-size: 18px;
+                letter-spacing: 2px;
+            }
+            .logo {
+                width: 46px;
+                height: 46px;
+                font-size: 17px;
+                border-radius: 10px;
+            }
+            .input {
+                padding: 11px 13px;
+                font-size: 11px;
+            }
+            .btn {
+                padding: 12px;
+                font-size: 11px;
+                letter-spacing: 1px;
+            }
+        }
+
+        /* ===== Selection Style ===== */
+        ::selection {
+            background: rgba(200, 0, 0, 0.5);
+            color: #fff;
+        }
+        ::-moz-selection {
+            background: rgba(200, 0, 0, 0.5);
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Scanlines -->
+    <div class="scanlines"></div>
+    <div class="crt-flicker"></div>
+
+    <!-- Background -->
+    <div class="visual"></div>
+
+    <!-- Floating Particles -->
+    <div class="particles" id="particles"></div>
+
+    <!-- Login Card -->
+    <div class="card">
+        <span class="corner-bl"></span>
+
+        <div class="brand">
+            <div class="logo-container">
+                <div class="logo-ring"></div>
+                <div class="logo">ZL</div>
+            </div>
+            <div class="glitch-wrapper">
+                <h1>ZERO LICH</h1>
+            </div>
+            <p class="subtitle">
+                <span class="dot"></span> RESTRICTED SYSTEM <span class="dot"></span> ACCESS PANEL <span class="dot"></span>
+            </p>
+        </div>
+
+        <form id="loginForm" onsubmit="return false;">
+            <div class="field">
+                <label class="label">Username / Email</label>
+                <div class="input-wrapper">
+                    <input id="user" class="input" type="text" placeholder="root@zerolich.local" autocomplete="off">
+                    <div class="input-glow"></div>
+                </div>
+            </div>
+
+            <div class="field">
+                <label class="label">Password</label>
+                <div class="input-wrapper">
+                    <input id="pass" class="input" type="password" placeholder="••••••••" autocomplete="off">
+                    <div class="input-glow"></div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn" id="loginBtn">
+                <span class="btn-icon">⏎</span> ENTER SYSTEM
+            </button>
+        </form>
+
+        <div class="status" id="status"></div>
+
+        <!-- Warning + Official Telegram -->
+        <div class="warning-area">
+            <p class="warning-text">
+                ⚠ <span class="highlight">تحذير:</span> ليس لدينا أي وكلاء أو موزعين. البيع يتم <span class="highlight">حصرياً</span> عبر حسابنا الرسمي على تيليجرام فقط. أي عملية شراء من أي جهة أخرى تعتبر <span class="highlight">نصباً واحتيالاً</span> ولا نتحمل مسؤوليتها.
+            </p>
+            <span class="telegram-user">@S_404_B</span>
+        </div>
+
+        <div class="footer-legal">
+            Zero Lich Interface &nbsp;•&nbsp; <strong>Simulation Only</strong> &nbsp;•&nbsp; v7.2
+        </div>
+    </div>
+
+<script>
+    // ======================== الإعدادات ========================
+    // رابط ملف users.json على GitHub (raw)
+    const USERS_JSON_URL = "https://raw.githubusercontent.com/098488324767346hd/test/main/users.json";
+    
+    // الصفحة التي سيتم التوجيه إليها بعد نجاح تسجيل الدخول
+    const REDIRECT_PAGE = "index.html";  // غيّرها إلى اسم صفحتك لاحقاً
+    
+    // عناصر DOM الخاصة بهذه الصفحة
+    const usernameInput = document.getElementById('user');
+    const passwordInput = document.getElementById('pass');
+    const loginButton = document.getElementById('loginBtn');
+    const statusDiv = document.getElementById('status');
+    
+    let cachedUsers = null;
+    
+    // عرض رسالة الحالة
+    function showStatus(message, type) {
+        statusDiv.textContent = message;
+        statusDiv.className = "status " + type;
+        statusDiv.style.display = "block";
+        
+        // إخفاء الرسالة بعد 5 ثوانٍ إذا لم تكن خطأً
+        if (type !== 'err') {
+            setTimeout(() => {
+                if (statusDiv.style.display === 'block') {
+                    statusDiv.style.display = 'none';
+                }
+            }, 5000);
+        }
+    }
+    
+    // جلب بيانات المستخدمين من GitHub (مع دعم proxy تلقائي في حال فشل CORS)
+    async function fetchUsersFromGitHub() {
+        if (cachedUsers !== null) return cachedUsers;
+        
+        // محاولة الجلب المباشر أولاً
+        async function tryFetch(url) {
+            try {
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    cache: 'no-cache'
+                });
+                if (!response.ok) return null;
+                const data = await response.json();
+                if (data && data.users && Array.isArray(data.users)) {
+                    return data.users;
+                }
+                return null;
+            } catch (e) {
+                console.warn("فشل الجلب من:", url, e.message);
+                return null;
+            }
+        }
+        
+        // المحاولة الأولى: مباشرة
+        let users = await tryFetch(USERS_JSON_URL);
+        if (users) {
+            cachedUsers = users;
+            return users;
+        }
+        
+        // المحاولة الثانية: استخدام proxy لتفادي CORS
+        const proxyUrls = [
+            "https://api.allorigins.win/raw?url=" + encodeURIComponent(USERS_JSON_URL),
+            "https://cors-anywhere.herokuapp.com/" + USERS_JSON_URL
+        ];
+        
+        for (const proxyUrl of proxyUrls) {
+            users = await tryFetch(proxyUrl);
+            if (users) {
+                cachedUsers = users;
+                return users;
+            }
+        }
+        
+        // إذا فشل كل شيء
+        showStatus("⚠️ فشل الاتصال بخادم التحقق. تأكد من اتصالك بالإنترنت أو حاول لاحقاً.", "err");
+        return null;
+    }
+    
+    // التحقق من صحة البيانات
+    async function authenticate(username, password) {
+        if (!username || !password) {
+            return { success: false, msg: "يرجى إدخال اسم المستخدم وكلمة المرور" };
+        }
+        
+        const users = await fetchUsersFromGitHub();
+        if (!users) {
+            return { success: false, msg: "تعذر الحصول على قاعدة بيانات المستخدمين. تأكد من الرابط والاتصال بالإنترنت." };
+        }
+        
+        const matched = users.find(u => u.username === username && u.password === password);
+        if (matched) {
+            return { success: true, msg: "تم التحقق بنجاح", user: matched.username };
+        } else {
+            return { success: false, msg: "❌ اسم المستخدم أو كلمة المرور غير صحيحة" };
+        }
+    }
+    
+    // معالج تسجيل الدخول
+    async function handleLogin() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        // إخفاء أي رسالة سابقة
+        statusDiv.style.display = "none";
+        
+        if (!username || !password) {
+            showStatus("⚠️ كلا الحقلين مطلوبان", "err");
+            return;
+        }
+        
+        // تغيير الزر وتعطيله مؤقتاً
+        const originalText = loginButton.innerHTML;
+        loginButton.innerHTML = '<span class="btn-icon">⏳</span> VERIFYING...';
+        loginButton.disabled = true;
+        
+        try {
+            const result = await authenticate(username, password);
+            if (result.success) {
+                // حفظ الجلسة في sessionStorage
+                const sessionData = {
+                    loggedIn: true,
+                    username: result.user,
+                    timestamp: Date.now()
+                };
+                sessionStorage.setItem("zeroLichSession", JSON.stringify(sessionData));
+                
+                showStatus("✅ " + result.msg + " - جاري التوجيه...", "ok");
+                
+                // التوجيه إلى الصفحة المطلوبة بعد نصف ثانية
+                setTimeout(() => {
+                    window.location.href = REDIRECT_PAGE;
+                }, 1000);
+            } else {
+                showStatus(result.msg, "err");
+                // تأثير وميض للحقول
+                usernameInput.style.borderColor = "#ff4444";
+                passwordInput.style.borderColor = "#ff4444";
+                setTimeout(() => {
+                    usernameInput.style.borderColor = "";
+                    passwordInput.style.borderColor = "";
+                }, 500);
+            }
+        } catch (err) {
+            showStatus("⚠️ خطأ غير متوقع: " + err.message, "err");
+        } finally {
+            loginButton.innerHTML = originalText;
+            loginButton.disabled = false;
+        }
+    }
+    
+    // التحقق من جلسة سابقة (إذا كانت صالحة، نقل المستخدم مباشرة)
+    function checkExistingSession() {
+        const sessionRaw = sessionStorage.getItem("zeroLichSession");
+        if (sessionRaw) {
+            try {
+                const session = JSON.parse(sessionRaw);
+                if (session.loggedIn === true && session.username) {
+                    const now = Date.now();
+                    const maxAge = 8 * 60 * 60 * 1000; // 8 ساعات
+                    if (now - session.timestamp < maxAge) {
+                        // جلسة صالحة - ننقل المستخدم فوراً
+                        showStatus("🔓 جلسة سابقة صالحة... جاري التوجيه", "ok");
+                        setTimeout(() => {
+                            window.location.href = REDIRECT_PAGE;
+                        }, 800);
+                        return true;
+                    } else {
+                        sessionStorage.removeItem("zeroLichSession");
+                    }
+                }
+            } catch(e) {
+                sessionStorage.removeItem("zeroLichSession");
+            }
+        }
+        return false;
+    }
+    
+    // ربط الأحداث
+    loginButton.addEventListener("click", handleLogin);
+    usernameInput.addEventListener("keypress", (e) => { if (e.key === "Enter") handleLogin(); });
+    passwordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") handleLogin(); });
+    
+    // إنشاء الجزيئات المتحركة
+    function createParticles() {
+        const particlesContainer = document.getElementById('particles');
+        for (let i = 0; i < 60; i++) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 6 + 4 + 's';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            particle.style.width = Math.random() * 2 + 1 + 'px';
+            particle.style.height = particle.style.width;
+            particlesContainer.appendChild(particle);
+        }
+    }
+    createParticles();
+    
+    // بدء التشغيل: فحص الجلسة، ثم محاولة تحميل البيانات مسبقاً (اختياري)
+    window.addEventListener("load", () => {
+        if (!checkExistingSession()) {
+            // محاولة جلب البيانات مسبقاً لتكون cache جاهزة (لا تظهر رسائل خطأ للمستخدم)
+            fetchUsersFromGitHub().catch(e => console.warn("Prefetch failed", e));
+        }
+    });
+</script>
+</body>
+</html>

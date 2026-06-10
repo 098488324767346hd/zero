@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zero Lich | Devices Control</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg: #020202;
+            --sidebar: #060606;
+            --panel: #0a0a0a;
+            --border: #1f0a0a;
+            --primary: #e60000;
+            --primary-glow: #ff1a1a;
+            --secondary: #cc0000;
+            --text: #eaeaea;
+            --muted: #7a7a7a;
+            --ok: #00e676;
+            --warn: #ff9100;
+            --terminal-bg: #050505;
+            --terminal-text: #00ff88;
+            --terminal-prompt: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Orbitron', sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Global scanlines */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.08) 2px,
+                    rgba(0, 0, 0, 0.08) 4px);
+            opacity: 0.5;
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width: 260px;
+            background: rgba(6, 6, 6, 0.97);
+            border-right: 1px solid var(--border);
+            padding: 28px 18px;
+            box-shadow: inset -12px 0 25px rgba(255, 0, 0, 0.03);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+        }
+
+        .logo {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: 5px;
+            margin-bottom: 45px;
+            text-shadow: 0 0 18px rgba(255, 0, 0, 0.55), 0 0 35px rgba(200, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+
+        .menu a {
+            display: block;
+            color: var(--muted);
+            text-decoration: none;
+            padding: 13px 16px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+
+        .menu a::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: var(--primary);
+            border-radius: 0 2px 2px 0;
+            transition: height 0.25s;
+        }
+
+        .menu a:hover,
+        .menu a.active {
+            background: rgba(255, 0, 0, 0.07);
+            border-color: rgba(255, 0, 0, 0.18);
+            color: #ff6b6b;
+        }
+
+        .menu a.active::before {
+            height: 60%;
+        }
+
+        .menu a:hover::before {
+            height: 40%;
+        }
+
+        /* ===== Main ===== */
+        .main {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            background:
+                radial-gradient(ellipse at center, rgba(120, 0, 0, 0.06), transparent 60%),
+                linear-gradient(180deg, #040404 0%, #000 100%);
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 16px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: var(--primary);
+            letter-spacing: 2px;
+            font-weight: 700;
+            text-shadow: 0 0 12px rgba(255, 0, 0, 0.3);
+        }
+        .header p {
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            margin-top: 4px;
+        }
+
+        .stage {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 18px;
+            height: calc(100% - 80px);
+        }
+
+        /* Phone frame */
+        .phone {
+            background: rgba(10, 10, 10, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 22px;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.05);
+            backdrop-filter: blur(8px);
+        }
+        .phone .frame {
+            width: 100%;
+            aspect-ratio: 9/19.5;
+            background: #000;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 0 0 2px #1a1a1a inset;
+        }
+        .phone video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Controls panel */
+        .controls {
+            background: rgba(10, 10, 10, 0.92);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: inset 0 0 35px rgba(255, 0, 0, 0.03), 0 0 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(12px);
+            overflow: auto;
+        }
+
+        /* Empty device message instead of device cards */
+        .no-device-message {
+            background: #040404;
+            border: 1px solid #2a0e0e;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: var(--muted);
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            letter-spacing: 1px;
+        }
+        .no-device-message span {
+            color: #ff5555;
+            font-weight: bold;
+        }
+
+        /* Toggle switch for Hidden Control */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #050505;
+            border: 1px solid #2a0e0e;
+            border-radius: 12px;
+            padding: 10px 14px;
+            gap: 10px;
+        }
+        .toggle-label {
+            font-size: 12px;
+            letter-spacing: 1.5px;
+            color: var(--muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #1f1f1f;
+            border-radius: 24px;
+            transition: 0.3s;
+            border: 1px solid #3a1a1a;
+        }
+        .slider:before {
+            content: "";
+            position: absolute;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 2px;
+            background: #444;
+            border-radius: 50%;
+            transition: 0.3s;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+        input:checked+.slider {
+            background: #4a0000;
+            border-color: #ff3333;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+        }
+        input:checked+.slider:before {
+            transform: translateX(18px);
+            background: #ff1a1a;
+            box-shadow: 0 0 12px #ff0000;
+        }
+
+        /* Buttons grid */
+        .btns {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+        }
+        .btn {
+            background: #050505;
+            border: 1px solid #1f0a0a;
+            border-radius: 10px;
+            padding: 10px 4px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            color: #ccc;
+            text-transform: uppercase;
+            word-break: break-word;
+        }
+        .btn:hover {
+            border-color: rgba(255, 0, 0, 0.5);
+            background: #0d0505;
+            color: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(255, 0, 0, 0.2);
+        }
+        .btn:active {
+            transform: scale(0.96);
+            transition: 0.05s;
+        }
+        .btn.active {
+            background: rgba(255, 0, 0, 0.15);
+            border-color: var(--secondary);
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.35);
+            color: #fff;
+        }
+
+        /* Hidden buttons (initially hidden) */
+        .hidden-btns {
+            display: none;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 4px;
+        }
+        .hidden-btns.visible {
+            display: grid;
+        }
+
+        /* ===== Terminal ===== */
+        .terminal {
+            background: #000000;
+            border: 1px solid #1f0f0f;
+            border-radius: 14px;
+            padding: 12px;
+            height: 160px;
+            overflow-y: auto;
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 12px;
+            color: var(--terminal-text);
+            box-shadow: inset 0 0 30px rgba(0, 255, 100, 0.03), 0 0 20px rgba(0, 0, 0, 0.6);
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .terminal .line {
+            display: flex;
+            gap: 6px;
+            align-items: baseline;
+        }
+        .prompt {
+            color: var(--terminal-prompt);
+            font-weight: bold;
+        }
+        .cmd {
+            color: #cccccc;
+        }
+        .result {
+            color: #00ff88;
+            font-weight: 600;
+        }
+        .timestamp {
+            color: #555;
+            font-size: 10px;
+            margin-right: 6px;
+        }
+
+        /* Scrollbar */
+        .terminal::-webkit-scrollbar {
+            width: 4px;
+        }
+        .terminal::-webkit-scrollbar-track {
+            background: #0a0a0a;
+            border-radius: 4px;
+        }
+        .terminal::-webkit-scrollbar-thumb {
+            background: #4a0000;
+            border-radius: 4px;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .stage {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                width: 80px;
+                padding: 20px 8px;
+            }
+            .menu a {
+                font-size: 10px;
+                padding: 8px 6px;
+                text-align: center;
+            }
+            .logo {
+                font-size: 14px;
+                letter-spacing: 2px;
+            }
+            .btns {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .hidden-btns {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">ZERO LICH</div>
+            <nav class="menu">
+                <a href="index.html">Dashboard</a>
+                <a href="info.html" class="active">Initialization</a>
+                <a href="control.html">Devices Control</a>
+                <a href="devices.html">Devices</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <h1>Devices Control</h1>
+                <p>Live interaction & advanced exploit panel</p>
+            </div>
+
+            <section class="stage">
+                <!-- Video Placeholder -->
+                <div class="phone">
+                    <div class="frame">
+                        <video id="ved" autoplay muted loop playsinline>
+                            <source src="ved.mp4" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                </div>
+
+                <!-- Control Interface -->
+                <div class="controls">
+                    <!-- Device status replaced with "No devices available" -->
+                    <div class="no-device-message">
+                        <span>[ WARNING ]</span> No connected devices found. <br>
+                        Please check your network or register a device first.
+                    </div>
+
+                    <!-- Hidden Control Toggle -->
+                    <div class="toggle-container">
+                        <span class="toggle-label">HIDDEN CONTROL</span>
+                        <label class="switch">
+                            <input type="checkbox" id="hiddenToggle" />
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Normal Commands -->
+                    <div class="btns" id="normalBtns"></div>
+
+                    <!-- Hidden Commands (visible when toggle on) -->
+                    <div class="hidden-btns" id="hiddenBtns"></div>
+
+                    <!-- Terminal Output -->
+                    <div class="terminal" id="terminal">
+                        <div class="line">
+                            <span class="prompt">[ZL]#</span>
+                            <span class="cmd">System booted. Awaiting commands...</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // ========== COMMAND SETS ==========
+        const normalCommands = [
+            "Brute Force Lock",
+            "Bypass Auth",
+            "Force System Wake",
+            "Force Sleep Mode",
+            "Screen Overdrive",
+            "Screen Dim Attack",
+            "Volume Max Exploit",
+            "Volume Null Attack",
+            "Wi-Fi Deauth",
+            "BT Sniffing",
+            "Airplane Mode",
+            "GPS Spoof",
+            "Camera Access",
+            "Mic Control",
+            "Flash Trigger",
+            "Rotation Hack",
+            "Screenshot",
+            "Recording",
+            "Task Hijack",
+            "Root Access",
+            "Backdoor",
+            "Notification Hijack",
+            "Panel Override",
+            "DND Mode",
+            "Silent Mode",
+            "Ringtone Change",
+            "Vibration Control",
+            "Theme Injection",
+            "Night Mode",
+            "Display Hack",
+            "Force Refresh",
+            "Cache Poison",
+            "Storage Access",
+            "Battery Drain",
+            "CPU Boost",
+            "GPU Control",
+            "Memory Dump",
+            "Sensor Read",
+            "Face ID Spoof",
+            "Touch Inject"
+        ];
+
+        const hiddenCommands = [
+            "Kernel Patch",
+            "Firmware Overwrite",
+            "Bootloader Unlock",
+            "Secure Enclave Bypass",
+            "Baseband Attack",
+            "ICCID Spoof",
+            "SIM Swap Exploit",
+            "Forensic Cleaner",
+            "Deep System Scan",
+            "Persistence Install",
+            "Log Wiper",
+            "ARB Reset",
+            "DRM Removal",
+            "Carrier Unlock",
+            "Baseband Downgrade"
+        ];
+
+        // ========== DOM ELEMENTS ==========
+        const normalContainer = document.getElementById('normalBtns');
+        const hiddenContainer = document.getElementById('hiddenBtns');
+        const terminal = document.getElementById('terminal');
+        const hiddenToggle = document.getElementById('hiddenToggle');
+
+        // ========== TERMINAL LOGGER ==========
+        function addTerminalLine(command, result = "Done.") {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'line';
+            lineDiv.innerHTML = `
+                <span class="timestamp">[${timeStr}]</span>
+                <span class="prompt">[ZL]#</span>
+                <span class="cmd">${command}</span>
+                <span class="result">➜ ${result}</span>
+            `;
+            terminal.appendChild(lineDiv);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        // ========== BUTTON FACTORY ==========
+        function createButton(label, isHidden = false) {
+            const btn = document.createElement('div');
+            btn.className = 'btn';
+            btn.textContent = label;
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+                const status = btn.classList.contains('active') ? 'ENABLED' : 'DISABLED';
+                const fullCommand = `${label} (${status})`;
+                addTerminalLine(fullCommand, "Done.");
+            });
+            return btn;
+        }
+
+        // ========== POPULATE BUTTONS ==========
+        function populateButtons() {
+            normalContainer.innerHTML = '';
+            hiddenContainer.innerHTML = '';
+
+            normalCommands.forEach(cmd => {
+                normalContainer.appendChild(createButton(cmd));
+            });
+
+            hiddenCommands.forEach(cmd => {
+                hiddenContainer.appendChild(createButton(cmd));
+            });
+        }
+        populateButtons();
+
+        // ========== HIDDEN CONTROL TOGGLE ==========
+        hiddenToggle.addEventListener('change', function() {
+            if (this.checked) {
+                hiddenContainer.classList.add('visible');
+                addTerminalLine('Hidden Control', 'ACTIVATED. Advanced commands unlocked.');
+            } else {
+                hiddenContainer.classList.remove('visible');
+                addTerminalLine('Hidden Control', 'DEACTIVATED.');
+            }
+        });
+
+        // Initial state: hidden commands hidden
+        hiddenContainer.classList.remove('visible');
+
+        // ========== AUTO SCROLL TERMINAL ON LOAD ==========
+        terminal.scrollTop = terminal.scrollHeight;
+
+        // Console warning
+        console.log('%c WARNING: ZERO LICH | DEVICE CONTROL PANEL | Unauthorized access will be traced.',
+            'color:#ff1a1a; font-weight:bold; font-size:14px;');
+    </script>
+</body>
+</html>

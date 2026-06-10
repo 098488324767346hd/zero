@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Zero Lich | المصادقة الأمنية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: #020202;
+            color: #e8e8e8;
+            font-family: 'Orbitron', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.1) 2px, rgba(0, 0, 0, 0.1) 4px);
+            z-index: 100;
+        }
+
+        .crt-flicker {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background: rgba(255, 0, 0, 0.02);
+            animation: flicker 0.12s infinite alternate;
+            z-index: 99;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.02; }
+            100% { opacity: 0.05; }
+        }
+
+        .visual-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background: radial-gradient(ellipse at center, rgba(80, 0, 0, 0.25), transparent 65%);
+        }
+        .visual-bg::before {
+            content: "";
+            position: absolute;
+            inset: -5%;
+            background: url("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg") center / contain no-repeat;
+            opacity: 0.2;
+            filter: blur(7px) brightness(0.6);
+            mix-blend-mode: screen;
+            animation: mapGlow 12s infinite alternate;
+        }
+        @keyframes mapGlow {
+            0% { opacity: 0.15; filter: blur(5px); }
+            100% { opacity: 0.35; filter: blur(10px); }
+        }
+        .visual-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, #000000dd, #000000aa, #0a0000cc);
+        }
+
+        .glass-panel {
+            position: relative;
+            z-index: 20;
+            width: 100%;
+            max-width: 760px;
+            margin: 20px;
+            background: rgba(8, 8, 8, 0.96);
+            border: 1px solid rgba(200, 0, 0, 0.35);
+            border-radius: 28px;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 0 50px rgba(180, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.02);
+            transition: all 0.2s;
+        }
+
+        .view {
+            padding: 32px 28px;
+            transition: 0.2s;
+        }
+
+        .hidden-view {
+            display: none;
+        }
+
+        .logo-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .logo-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(145deg, #1a0000, #330000);
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 900;
+            color: #ff3333;
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.5);
+            border: 1px solid #a00;
+        }
+        .title {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 5px;
+            color: #ff2020;
+            text-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+            text-transform: uppercase;
+        }
+        .subtitle {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 3px;
+            color: #aa5555;
+        }
+
+        .warning-box {
+            background: #0d0404;
+            border: 1px dashed #691c1c;
+            border-radius: 16px;
+            padding: 14px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: #ffa0a0;
+            line-height: 1.7;
+            margin-bottom: 20px;
+        }
+        .warning-box .highlight {
+            color: #ff5555;
+            font-weight: bold;
+        }
+        .description {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 13px;
+            color: #bcbcbc;
+            line-height: 1.8;
+            border-right: 3px solid #b33;
+            padding-right: 16px;
+            margin-bottom: 20px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin: 20px 0 20px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .input-group label {
+            font-size: 12px;
+            letter-spacing: 2px;
+            color: #cc8888;
+            font-weight: 500;
+        }
+        .input-group input {
+            background: #0f0f0f;
+            border: 1px solid #4a1a1a;
+            padding: 12px 16px;
+            border-radius: 14px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            color: #ffdddd;
+            outline: none;
+            transition: 0.2s;
+        }
+        .input-group input:focus {
+            border-color: #ff3a3a;
+            box-shadow: 0 0 12px rgba(255, 40, 40, 0.4);
+        }
+        .login-btn {
+            background: linear-gradient(95deg, #b11, #5a0000);
+            border: none;
+            padding: 14px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: white;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(160, 0, 0, 0.4);
+        }
+        .login-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            letter-spacing: 3px;
+        }
+        .error-msg {
+            color: #ff7777;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 12px;
+            text-align: center;
+            background: #1a0505;
+            padding: 10px;
+            border-radius: 12px;
+            margin-top: 8px;
+        }
+        .telegram-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, #1e3b5a, #0e1f2e);
+            padding: 10px 20px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: bold;
+            color: white;
+            margin: 8px 0 16px;
+            transition: 0.2s;
+            width: fit-content;
+        }
+        .telegram-link svg {
+            width: 18px;
+            fill: #4ea4f6;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+            border-bottom: 1px solid #a22;
+            padding-bottom: 12px;
+        }
+        .welcome-text {
+            font-family: 'Share Tech Mono', monospace;
+            color: #ff8a8a;
+            font-size: 14px;
+        }
+        .logout-btn {
+            background: #2a0a0a;
+            border: 1px solid #a44;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #ffb3b3;
+        }
+        .logout-btn:hover {
+            background: #4f1111;
+            color: white;
+        }
+        .dashboard-stats {
+            background: #0a0202;
+            border: 1px solid #3a1515;
+            border-radius: 24px;
+            padding: 20px;
+            margin: 20px 0;
+            font-family: 'Share Tech Mono', monospace;
+        }
+        .dashboard-stats h3 {
+            color: #ff5e5e;
+            margin-bottom: 14px;
+            font-size: 18px;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .feature-card {
+            background: #110303;
+            padding: 12px;
+            border-radius: 14px;
+            border-right: 2px solid #c44;
+            font-size: 12px;
+        }
+        .back-link {
+            display: inline-block;
+            background: linear-gradient(160deg, #990000, #330000);
+            padding: 10px 24px;
+            border-radius: 30px;
+            text-decoration: none;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 12px;
+        }
+        .footer-note {
+            text-align: center;
+            font-size: 9px;
+            color: #444;
+            margin-top: 28px;
+            font-family: monospace;
+        }
+        hr {
+            border-color: #2a0f0f;
+            margin: 12px 0;
+        }
+
+        @media (max-width: 550px) {
+            .view { padding: 20px 16px; }
+            .title { font-size: 22px; }
+            .feature-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="crt-flicker"></div>
+<div class="visual-bg"></div>
+
+<div class="glass-panel" id="appRoot">
+    <!-- عرض تسجيل الدخول -->
+    <div id="loginView" class="view">
+        <div class="logo-area">
+            <div class="logo-icon">ZL</div>
+            <h1 class="title">ZERO LICH</h1>
+            <p class="subtitle">حدود السيطرة الرقمية</p>
+        </div>
+
+        <div class="warning-box">
+            <span class="highlight">⚠️ تحذير أمني:</span> إذا اشتريت هذه الأداة من أي مصدر غير <span class="highlight">صفحتنا الرسمية</span>، فأنت قد تعرضت <span class="highlight">للنصب</span>.
+            المصدر الوحيد هو حسابنا الرسمي على تيليجرام أدناه. لا وكلاء.
+        </div>
+
+        <div class="description">
+            Zero Lich — منصة اختبار اختراق وإدارة الأجهزة عن بُعد. صلاحيات عميقة، تحكم كامل، استخراج بيانات آني. صُممت للباحثين الأمنيين.
+            <br>▶︎ المصادقة مطلوبة للوصول إلى لوحة القيادة.
+        </div>
+
+        <div class="login-form">
+            <div class="input-group">
+                <label>◉ اسم المستخدم</label>
+                <input type="text" id="loginUsername" placeholder="ZeroLich_Agent" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>◉ كلمة المرور</label>
+                <input type="password" id="loginPassword" placeholder="••••••••">
+            </div>
+            <button class="login-btn" id="doLoginBtn">⛁ الدخول إلى النظام ⛁</button>
+            <div id="loginErrorMsg" class="error-msg" style="display: none;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: center;">
+            <a href="https://t.me/S_404_B" target="_blank" class="telegram-link">
+                <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.66-.52.36-1 .53-1.42.52-.47-.01-1.37-.26-2.03-.48-.82-.27-1.47-.42-1.41-.88.03-.24.37-.49 1.02-.74 4.01-1.75 6.69-2.9 8.04-3.46 3.84-1.6 4.64-1.88 5.16-1.89.11 0 .37.03.54.17.14.12.18.28.2.44-.01.06.01.24 0 .38z"/></svg>
+                تيليجرام الرسمي | ZL
+            </a>
+        </div>
+
+        <p class="footer-note">محاكاة متقدمة • جميع الجلسات مشفرة</p>
+    </div>
+
+    <!-- لوحة التحكم الداخلية -->
+    <div id="dashboardView" class="view hidden-view">
+        <div class="dashboard-header">
+            <div class="welcome-text" id="dashboardUserDisplay">◉ المستخدم: <span style="color:#ff8888">----</span></div>
+            <button class="logout-btn" id="logoutBtn">⟳ تسجيل الخروج ⟳</button>
+        </div>
+
+        <div style="text-align: right;">
+            <h2 style="color:#ff5555; font-size: 20px; letter-spacing: 2px;">⎾ ZERO LICH CORE ⏌</h2>
+            <p style="font-family: monospace; font-size: 12px; margin: 10px 0 14px;">غرفة التحكم | واجهة العمليات المتقدمة</p>
+        </div>
+
+        <div class="dashboard-stats">
+            <h3>⚡ حالة المنصة</h3>
+            <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: space-between;">
+                <span>🔴 النظام: نشط</span>
+                <span>🛰️ الأجهزة المرتبطة: 3</span>
+                <span>📡 آخر تزامن: لحظي</span>
+            </div>
+        </div>
+
+        <div style="background: #050101; border-radius: 20px; padding: 16px; border: 1px solid #5c1a1a; margin-bottom: 20px;">
+            <h3 style="color:#ff6a6a; margin-bottom: 12px;">◈ لوحة العمليات ◈</h3>
+            <div class="feature-grid">
+                <div class="feature-card">📱 مراقبة النواة (KernelWatch)</div>
+                <div class="feature-card">📂 استخراج البيانات (DataMiner)</div>
+                <div class="feature-card">🌐 استطلاع الشبكات (NetGhost)</div>
+                <div class="feature-card">⚙️ نشر الحمولات (PayloadEngine)</div>
+                <div class="feature-card">🔐 تشفير الجلسات (ZeroCrypt)</div>
+                <div class="feature-card">📡 تحكم عن بعد (R00T Shell)</div>
+            </div>
+            <hr style="margin: 16px 0; border-color:#4a1515;">
+            <div class="cryptic-section" style="color:#ff7474; font-family: monospace; font-size: 11px; text-align: center; padding: 8px;">
+                ⎔ النظام ليس جدارًا… بل وهم مُبرمج. كل جهاز مرآة — يعكس من يراك. في عمق الشيفرة نولد من جديد. الوصول ليس نهاية… بل بداية السؤال: من كان يملكك قبل أن تصل؟
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 16px;">
+            <a href="#" id="internalBackLink" style="text-decoration: none;" class="back-link">◂ العودة إلى الواجهة الرئيسية</a>
+        </div>
+        <p class="footer-note" style="margin-top: 16px;">Zero Lich | جلسة آمنة • جميع الحقوق محفوظة</p>
+    </div>
+</div>
+
+<script>
+    // رابط JSON الصحيح (raw)
+    const USERS_JSON_URL = "https://raw.githubusercontent.com/098488324767346hd/test/main/users.json";
+
+    // عناصر DOM
+    const loginContainer = document.getElementById('loginView');
+    const dashboardContainer = document.getElementById('dashboardView');
+    const loginBtn = document.getElementById('doLoginBtn');
+    const usernameInput = document.getElementById('loginUsername');
+    const passwordInput = document.getElementById('loginPassword');
+    const errorDiv = document.getElementById('loginErrorMsg');
+    const logoutButton = document.getElementById('logoutBtn');
+    const dashboardUserSpan = document.querySelector('#dashboardUserDisplay span');
+    const internalBackLink = document.getElementById('internalBackLink');
+
+    let cachedUsers = null;
+
+    // جلب المستخدمين من GitHub
+    async function fetchUsersFromGitHub() {
+        if (cachedUsers !== null) return cachedUsers;
+        
+        try {
+            console.log("جاري جلب البيانات من:", USERS_JSON_URL);
+            const response = await fetch(USERS_JSON_URL);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            console.log("البيانات المستلمة:", data);
+            
+            if (!data.users || !Array.isArray(data.users)) {
+                throw new Error("الملف لا يحتوي على مصفوفة users بالشكل الصحيح");
+            }
+            
+            cachedUsers = data.users;
+            return cachedUsers;
+        } catch (err) {
+            console.error("خطأ في الجلب:", err);
+            errorDiv.style.display = "block";
+            errorDiv.innerText = `⚠️ فشل الاتصال بقاعدة البيانات: ${err.message}\nتأكد من أن الرابط صحيح والملف عام.`;
+            return null;
+        }
+    }
+
+    // المصادقة
+    async function authenticate(username, password) {
+        if (!username || !password) {
+            return { success: false, msg: "يرجى إدخال اسم المستخدم وكلمة المرور" };
+        }
+        
+        const users = await fetchUsersFromGitHub();
+        if (!users) {
+            return { success: false, msg: "تعذر الحصول على قاعدة بيانات المستخدمين. تحقق من اتصال الإنترنت أو الرابط." };
+        }
+        
+        const matchedUser = users.find(u => u.username === username && u.password === password);
+        if (matchedUser) {
+            return { success: true, msg: "تم التحقق", user: matchedUser.username };
+        } else {
+            return { success: false, msg: "❌ اسم مستخدم أو كلمة مرور غير صحيحة" };
+        }
+    }
+
+    // تسجيل الدخول
+    async function performLogin() {
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value.trim();
+        
+        errorDiv.style.display = "none";
+        errorDiv.innerText = "";
+
+        if (!username || !password) {
+            errorDiv.innerText = "⚠️ كلا الحقلين مطلوبان";
+            errorDiv.style.display = "block";
+            return;
+        }
+
+        const originalBtnText = loginBtn.innerText;
+        loginBtn.innerText = "⏳ جاري التحقق...";
+        loginBtn.disabled = true;
+
+        try {
+            const result = await authenticate(username, password);
+            if (result.success) {
+                const sessionData = {
+                    loggedIn: true,
+                    username: result.user,
+                    timestamp: Date.now()
+                };
+                sessionStorage.setItem("zeroLichSession", JSON.stringify(sessionData));
+                showDashboard(result.user);
+            } else {
+                errorDiv.innerText = result.msg;
+                errorDiv.style.display = "block";
+                usernameInput.style.borderColor = "#ff4444";
+                passwordInput.style.borderColor = "#ff4444";
+                setTimeout(() => {
+                    usernameInput.style.borderColor = "";
+                    passwordInput.style.borderColor = "";
+                }, 500);
+            }
+        } catch (err) {
+            errorDiv.innerText = "⚠️ خطأ غير متوقع: " + err.message;
+            errorDiv.style.display = "block";
+        } finally {
+            loginBtn.innerText = originalBtnText;
+            loginBtn.disabled = false;
+        }
+    }
+
+    // إظهار لوحة التحكم
+    function showDashboard(username) {
+        if (dashboardUserSpan) dashboardUserSpan.innerText = username;
+        loginContainer.classList.add("hidden-view");
+        dashboardContainer.classList.remove("hidden-view");
+        console.log(`✅ دخول ناجح: ${username}`);
+    }
+
+    // تسجيل الخروج
+    function logout() {
+        sessionStorage.removeItem("zeroLichSession");
+        usernameInput.value = "";
+        passwordInput.value = "";
+        errorDiv.style.display = "none";
+        dashboardContainer.classList.add("hidden-view");
+        loginContainer.classList.remove("hidden-view");
+        console.log("🔒 تم تسجيل الخروج");
+    }
+
+    // التحقق من جلسة سابقة
+    function checkExistingSession() {
+        const sessionRaw = sessionStorage.getItem("zeroLichSession");
+        if (sessionRaw) {
+            try {
+                const session = JSON.parse(sessionRaw);
+                if (session.loggedIn === true && session.username) {
+                    const now = Date.now();
+                    const maxAge = 8 * 60 * 60 * 1000; // 8 ساعات
+                    if (now - session.timestamp < maxAge) {
+                        showDashboard(session.username);
+                        return true;
+                    } else {
+                        sessionStorage.removeItem("zeroLichSession");
+                    }
+                }
+            } catch(e) { 
+                sessionStorage.removeItem("zeroLichSession");
+            }
+        }
+        return false;
+    }
+
+    // ربط الأحداث
+    loginBtn.addEventListener("click", performLogin);
+    logoutButton.addEventListener("click", logout);
+    usernameInput.addEventListener("keypress", (e) => { if (e.key === "Enter") performLogin(); });
+    passwordInput.addEventListener("keypress", (e) => { if (e.key === "Enter") performLogin(); });
+    
+    if (internalBackLink) {
+        internalBackLink.addEventListener("click", (e) => {
+            e.preventDefault();
+            logout();
+        });
+    }
+
+    // بدء التشغيل
+    window.addEventListener("load", () => {
+        if (!checkExistingSession()) {
+            // محاولة جلب البيانات مسبقاً للتأكد من الاتصال (اختياري)
+            fetchUsersFromGitHub().catch(e => console.warn("تحذير: لا يمكن جلب البيانات مسبقاً", e));
+        }
+    });
+</script>
+</body>
+</html>

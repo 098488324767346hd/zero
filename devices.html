@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zero Lich | Devices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg: #020202;
+            --sidebar: #060606;
+            --panel: #0a0a0a;
+            --border: #1f0a0a;
+            --primary: #e60000;
+            --primary-glow: #ff1a1a;
+            --secondary: #cc0000;
+            --text: #e8e8e8;
+            --muted: #7a7a7a;
+            --ok: #00e676;
+            --idle: #f59e0b;
+            --off: #ef4444;
+            --terminal-bg: #000000;
+            --terminal-text: #00ff88;
+            --prompt: #ff4d4d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Orbitron', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* Global scanlines */
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            background: repeating-linear-gradient(0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0, 0, 0, 0.08) 2px,
+                    rgba(0, 0, 0, 0.08) 4px);
+            opacity: 0.45;
+        }
+
+        /* CRT flicker */
+        .crt-flicker {
+            position: fixed;
+            inset: 0;
+            z-index: 99;
+            pointer-events: none;
+            background: rgba(255, 0, 0, 0.02);
+            animation: flicker 0.15s infinite alternate;
+            opacity: 0;
+        }
+        @keyframes flicker {
+            0% {
+                opacity: 0.02;
+            }
+            50% {
+                opacity: 0.05;
+            }
+            100% {
+                opacity: 0.01;
+            }
+        }
+
+        /* Background with red map */
+        .visual-bg {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background:
+                radial-gradient(ellipse at center, rgba(80, 0, 0, 0.2), transparent 60%),
+                radial-gradient(ellipse at 30% 20%, rgba(40, 0, 0, 0.3), transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(60, 0, 0, 0.25), transparent 50%),
+                linear-gradient(180deg, #030303 0%, #000000 100%);
+        }
+        .visual-bg::before {
+            content: "";
+            position: absolute;
+            inset: -5%;
+            -webkit-mask: url("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg") center / contain no-repeat;
+            mask: url("https://upload.wikimedia.org/wikipedia/commons/8/80/World_map_-_low_resolution.svg") center / contain no-repeat;
+            background: radial-gradient(circle at 50% 50%, rgba(255, 40, 40, 0.4), rgba(100, 0, 0, 0.2));
+            filter: blur(6px);
+            opacity: 0.65;
+            animation: mapPulse 8s ease-in-out infinite;
+        }
+        @keyframes mapPulse {
+            0%,
+            100% {
+                opacity: 0.65;
+            }
+            50% {
+                opacity: 0.85;
+            }
+        }
+        .visual-bg::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.75)),
+                radial-gradient(ellipse at center, rgba(200, 0, 0, 0.06), transparent 70%);
+            z-index: 2;
+        }
+
+        .app {
+            display: flex;
+            height: 100vh;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: rgba(6, 6, 6, 0.97);
+            border-right: 1px solid var(--border);
+            padding: 28px 18px;
+            box-shadow: inset -12px 0 25px rgba(255, 0, 0, 0.03);
+            backdrop-filter: blur(10px);
+            display: flex;
+            flex-direction: column;
+            z-index: 20;
+        }
+        .logo {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 20px;
+            letter-spacing: 5px;
+            margin-bottom: 45px;
+            text-shadow: 0 0 18px rgba(255, 0, 0, 0.55), 0 0 35px rgba(200, 0, 0, 0.3);
+            text-align: center;
+        }
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex: 1;
+        }
+        .menu a {
+            display: block;
+            color: var(--muted);
+            text-decoration: none;
+            padding: 13px 16px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 1.5px;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .menu a::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 0;
+            background: var(--primary);
+            border-radius: 0 2px 2px 0;
+            transition: height 0.25s;
+        }
+        .menu a:hover,
+        .menu a.active {
+            background: rgba(255, 0, 0, 0.07);
+            border-color: rgba(255, 0, 0, 0.18);
+            color: #ff6b6b;
+        }
+        .menu a.active::before {
+            height: 60%;
+        }
+        .menu a:hover::before {
+            height: 40%;
+        }
+
+        /* Main */
+        .main {
+            flex: 1;
+            padding: 16px 20px;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .header h1 {
+            font-size: 24px;
+            color: var(--primary);
+            letter-spacing: 2px;
+            text-shadow: 0 0 12px rgba(255, 0, 0, 0.4);
+            font-weight: 700;
+        }
+        .header p {
+            color: var(--muted);
+            font-size: 12px;
+            letter-spacing: 1px;
+        }
+
+        /* Device grid */
+        .grid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Empty state message */
+        .empty-message {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            min-height: 300px;
+            background: rgba(10, 10, 10, 0.6);
+            border: 1px dashed #4a1010;
+            border-radius: 28px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 26px;
+            color: #ff5555;
+            text-align: center;
+            letter-spacing: 2px;
+            backdrop-filter: blur(4px);
+            box-shadow: inset 0 0 40px rgba(255, 0, 0, 0.08);
+            text-shadow: 0 0 12px rgba(255, 0, 0, 0.5);
+        }
+
+        /* Hidden Control Panel */
+        .cmd-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .cmd-btn {
+            background: #080808;
+            border: 1px solid #2a0e0e;
+            border-radius: 8px;
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 600;
+            color: #bbbbbb;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+        .cmd-btn:hover {
+            background: #100505;
+            border-color: #ff3333;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(255, 0, 0, 0.25);
+            transform: translateY(-2px);
+        }
+        .cmd-btn:active {
+            transform: scale(0.96);
+            transition: 0.05s;
+        }
+
+        /* Terminal */
+        .terminal {
+            background: #000000;
+            border: 1px solid #1f0f0f;
+            border-radius: 12px;
+            padding: 10px;
+            height: 110px;
+            overflow-y: auto;
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            font-size: 11px;
+            color: var(--terminal-text);
+            box-shadow: inset 0 0 25px rgba(255, 0, 0, 0.03);
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-top: 12px;
+        }
+        .terminal .line {
+            display: flex;
+            gap: 6px;
+            align-items: baseline;
+        }
+        .prompt {
+            color: var(--prompt);
+            font-weight: bold;
+        }
+        .cmd {
+            color: #cccccc;
+        }
+        .result {
+            color: #00ff88;
+            font-weight: 600;
+        }
+        .timestamp {
+            color: #555;
+            font-size: 10px;
+            margin-right: 4px;
+        }
+
+        /* Scrollbar */
+        .terminal::-webkit-scrollbar {
+            width: 4px;
+        }
+        .terminal::-webkit-scrollbar-track {
+            background: #0a0a0a;
+            border-radius: 4px;
+        }
+        .terminal::-webkit-scrollbar-thumb {
+            background: #4a0000;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 800px) {
+            .sidebar {
+                width: 80px;
+                padding: 20px 8px;
+            }
+            .menu a {
+                font-size: 10px;
+                padding: 8px 6px;
+                text-align: center;
+            }
+            .logo {
+                font-size: 14px;
+            }
+            .empty-message {
+                font-size: 18px;
+                min-height: 200px;
+            }
+            .cmd-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="crt-flicker"></div>
+    <div class="visual-bg"></div>
+
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">ZERO LICH</div>
+            <nav class="menu">
+                <a href="index.html">Dashboard</a>
+                <a href="info.html" class="active">Initialization</a>
+                <a href="control.html">Devices Control</a>
+                <a href="devices.html">Devices</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main">
+            <div class="header">
+                <div>
+                    <h1>DEVICES</h1>
+                    <p>No connected devices</p>
+                </div>
+            </div>
+
+            <!-- Device Grid with Empty Message -->
+            <section class="grid" id="deviceGrid">
+                <div class="empty-message">Not Devices yet</div>
+            </section>
+
+            <!-- Command Buttons (always visible) -->
+            <div class="cmd-grid" id="cmdGrid">
+                <button class="cmd-btn" data-cmd="Mass Lock">Mass Lock</button>
+                <button class="cmd-btn" data-cmd="Wipe Selected">Wipe Selected</button>
+                <button class="cmd-btn" data-cmd="Geo-Fence Bypass">Geo-Fence Bypass</button>
+                <button class="cmd-btn" data-cmd="Root All Devices">Root All</button>
+                <button class="cmd-btn" data-cmd="Kernel Patch">Kernel Patch</button>
+                <button class="cmd-btn" data-cmd="Baseband Attack">Baseband Attack</button>
+                <button class="cmd-btn" data-cmd="SIM Swap">SIM Swap</button>
+                <button class="cmd-btn" data-cmd="Forensic Dump">Forensic Dump</button>
+            </div>
+
+            <!-- Terminal -->
+            <div class="terminal" id="terminal">
+                <div class="line">
+                    <span class="prompt">[ZL]#</span>
+                    <span class="cmd">Device panel online. No devices found.</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Terminal handling (same as before)
+        const terminal = document.getElementById('terminal');
+
+        document.querySelectorAll('.cmd-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const command = this.dataset.cmd;
+                addTerminalLine(command, 'Command executed (no devices available).');
+            });
+        });
+
+        function addTerminalLine(command, result = "") {
+            const now = new Date();
+            const timeStr = now.toTimeString().split(' ')[0];
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'line';
+            lineDiv.innerHTML = `
+                <span class="timestamp">[${timeStr}]</span>
+                <span class="prompt">[ZL]#</span>
+                <span class="cmd">${command}</span>
+                ${result ? `<span class="result">➜ ${result}</span>` : ''}
+            `;
+            terminal.appendChild(lineDiv);
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+
+        console.log('%c⚠️ ZERO LICH %c| DEVICES PANEL %c| No devices available.',
+            'color:#ff1a1a; font-weight:bold; font-size:14px;',
+            'color:#aaa;',
+            'color:#666;');
+    </script>
+</body>
+</html>
