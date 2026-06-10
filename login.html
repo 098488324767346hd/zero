@@ -812,14 +812,14 @@
         
         const users = await fetchUsersFromGitHub();
         if (!users) {
-            return { success: false, msg: "تعذر الحصول على قاعدة بيانات المستخدمين. تأكد من الرابط والاتصال بالإنترنت." };
+            return { success: false, msg: "تعذر . تأكد من الرابط والاتصال بالإنترنت." };
         }
         
         const matched = users.find(u => u.username === username && u.password === password);
         if (matched) {
             return { success: true, msg: "تم التحقق بنجاح", user: matched.username };
         } else {
-            return { success: false, msg: "❌ اسم المستخدم أو كلمة المرور غير صحيحة" };
+            return { success: false, msg: " اسم المستخدم أو كلمة المرور غير صحيحة" };
         }
     }
     
@@ -832,13 +832,13 @@
         statusDiv.style.display = "none";
         
         if (!username || !password) {
-            showStatus("⚠️ كلا الحقلين مطلوبان", "err");
+            showStatus(" كلا الحقلين مطلوبان", "err");
             return;
         }
         
         // تغيير الزر وتعطيله مؤقتاً
         const originalText = loginButton.innerHTML;
-        loginButton.innerHTML = '<span class="btn-icon">⏳</span> VERIFYING...';
+        loginButton.innerHTML = '<span class="btn-icon"></span> VERIFYING...';
         loginButton.disabled = true;
         
         try {
@@ -852,7 +852,7 @@
                 };
                 sessionStorage.setItem("zeroLichSession", JSON.stringify(sessionData));
                 
-                showStatus("✅ " + result.msg + " - جاري التوجيه...", "ok");
+                showStatus("✅ " + result.msg + " -  ...", "ok");
                 
                 // التوجيه إلى الصفحة المطلوبة بعد نصف ثانية
                 setTimeout(() => {
@@ -887,7 +887,7 @@
                     const maxAge = 8 * 60 * 60 * 1000; // 8 ساعات
                     if (now - session.timestamp < maxAge) {
                         // جلسة صالحة - ننقل المستخدم فوراً
-                        showStatus("🔓 جلسة سابقة صالحة... جاري التوجيه", "ok");
+                        showStatus("", "ok");
                         setTimeout(() => {
                             window.location.href = REDIRECT_PAGE;
                         }, 800);
